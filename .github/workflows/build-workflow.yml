@@ -49,7 +49,7 @@ jobs:
         id: GetCodeQualityResult
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ' https://sonarcloud.io/api/qualitygates/project_status?projectKey=prakashvra_sonarcloud-github-action-samples&organization=prakashvra&branch=master'
+          url: ' https://sonarcloud.io/api/qualitygates/project_status?projectKey=invisibl-labs_sonarcloud-github-action-samples&organization=invisibl-labs&branch=main'
           method: 'GET'
           username: ${{ secrets.SONAR_TOKEN }}
           customHeaders: '{"Content-Type": "application/json"}'
