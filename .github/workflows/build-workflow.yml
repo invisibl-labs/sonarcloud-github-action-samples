@@ -38,8 +38,6 @@ jobs:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-      - name: Build 
-        run: ./gradlew build 
       - name: Build and analyze
         run: ./gradlew build jacocoTestReport sonarqube --info
         env:
