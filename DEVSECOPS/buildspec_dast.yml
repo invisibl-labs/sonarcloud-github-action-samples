@@ -1,0 +1,21 @@
+version: 0.2
+phases:
+    build:
+        commands:
+        - apt update
+        - apt install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y
+        - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+        - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        - apt install docker-ce -y
+        - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2 &
+        - curl https://bootstrap.pypa.io/get-pip.py | python3
+        - echo Starting OWASP Zed Attack Proxy active scanning...
+        - chmod 777 $PWD
+        - mkdir -p /zap/wrk
+        - chmod 777 /zap/wrk      
+        - docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-full-scan.py -t $ApplicationURL -j  -c passive-scan.conf -J owaspresult.json 
+        - echo Build completed.
+        - cat owaspresult.json
+        - apt-get update -y && apt-get -y install jq python3-pip python3-dev && pip3 install --upgrade awscli
+        - aws s3 cp owaspresult.json s3://sasttestgokul-bucket/DAST-$CODEBUILD_RESOLVED_SOURCE_VERSION.json
+ 
