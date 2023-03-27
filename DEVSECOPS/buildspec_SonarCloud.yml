@@ -1,0 +1,35 @@
+##Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+##SPDX-License-Identifier: MIT-0
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      php: 7.3
+      java: corretto11
+    commands:
+      - echo "in the install phase"
+    finally:
+      - echo This always runs even if the login command fails 
+  pre_build:
+    commands:
+      - wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-linux.zip
+      - unzip sonar-scanner-cli-4.4.0.2170-linux.zip
+      - mv sonar-scanner-4.4.0.2170-linux /opt/sonar-scanner
+      - chmod -R 775 /opt/sonar-scanner
+      - echo "stage pre_build completed"
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR
+      - /opt/sonar-scanner/bin/sonar-scanner -X -Dsonar.sources=. -Dproject.settings=sonar-project.properties -Dsonar.host.url=$SonarCloud_URL -Dsonar.login=$SonarCloud_Access_Token -Dsonar.projectKey=saba1119_devsecops  -Dsonar.organization=saba1119 -Dsonar.python.coverage.reportPaths >coverage.xml
+      - cat coverage.xml
+      - sleep 5
+      - curl -u $SonarCloud_Access_Token https://sonarcloud.io/api/qualitygates/project_status?projectKey=saba1119_devsecops >SonarCloud_scanreport.json
+      - cat SonarCloud_scanreport.json
+      - apt-get update -y && apt-get -y install jq python3-pip python3-dev && pip3 install --upgrade awscli
+      - aws s3 cp SonarCloud_scanreport.json s3://sasttestgokul-bucket/SAST-$CODEBUILD_RESOLVED_SOURCE_VERSION.json
+      - if [ $(jq -r '.projectStatus.status' SonarCloud_scanreport.json ) = ERROR ] ; then $CODEBUILD_BUILD_SUCCEEDING -eq 0 ;fi
+      - echo "build stage completed"
+      
+  post_build:
+    commands:
+      - echo Build completed on `date`     
